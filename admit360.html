@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Admission Management System</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f6f9; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        /* Navigation Tabs */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 12px 24px; border: none; background: #e0e0e0; cursor: pointer; font-weight: bold; border-radius: 6px; font-size: 15px; }
+        .tab-btn.active { background: #007bff; color: white; }
+
+        /* Card Sections */
+        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        h2 { margin-bottom: 20px; color: #222; border-bottom: 2px solid #007bff; padding-bottom: 8px; }
+
+        /* Form Styles */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        button.submit-btn { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button.submit-btn:hover { background: #218838; }
+
+        /* Table Styles */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: left; }
+        th { background: #f8f9fa; }
+        .status-Pending { color: #d97706; font-weight: bold; }
+        .status-Approved { color: #16a34a; font-weight: bold; }
+        .status-Rejected { color: #dc2626; font-weight: bold; }
+
+        /* Action Buttons */
+        .action-btn { padding: 6px 12px; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: bold; margin-right: 5px; }
+        .approve-btn { background: #16a34a; }
+        .reject-btn { background: #dc2626; }
+        .doc-link { color: #007bff; text-decoration: none; font-weight: 500; }
+        .doc-link:hover { text-decoration: underline; }
+
+        #alertMessage { margin-top: 15px; padding: 10px; border-radius: 4px; display: none; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- View Switcher -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchView('student')">Student Application Form</button>
+        <button class="tab-btn" onclick="switchView('admin')">College Admin Panel</button>
+    </div>
+
+    <!-- STUDENT VIEW -->
+    <div id="studentView" class="card">
+        <h2>Student Admission Form</h2>
+        <form id="admissionForm">
+            <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" placeholder="e.g., Jane Doe" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="jane@example.com" required>
+            </div>
+            <div class="form-group">
+                <label for="course">Select Course</label>
+                <select id="course" required>
+                    <option value="">-- Choose a Course --</option>
+                    <option value="CSE">Computer Science & Engineering (CSE)</option>
+                    <option value="ECE">Electronics & Comm. Engineering (ECE)</option>
+                    <option value="MEC">Mechanical Engineering (MEC)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="document">Upload Qualification Document</label>
+                <input type="file" id="document" required>
+            </div>
+            <button type="submit" class="submit-btn">Submit Application</button>
+        </form>
+        <div id="alertMessage" class="alert-success">Application submitted successfully! Switch to the Admin Panel tab to process it.</div>
+    </div>
+
+    <!-- ADMIN VIEW -->
+    <div id="adminView" class="card" style="display: none;">
+        <h2>College Admission Management</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Email</th>
+                    <th>Course</th>
+                    <th>Document</th>
+                    <th>Status</th>
+                    <th>Admission ID</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="adminTableBody">
+                <!-- Records injected here via JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Initialize sequence counter and application storage in browser localStorage
+    if (!localStorage.getItem('admissionSequence')) {
+        localStorage.setItem('admissionSequence', '1');
+    }
+    if (!localStorage.getItem('applicationsData')) {
+        localStorage.setItem('applicationsData', JSON.stringify([]));
+    }
+
+    // Switch between Student Form and Admin Panel tabs
+    function switchView(view) {
+        const studentView = document.getElementById('studentView');
+        const adminView = document.getElementById('adminView');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+
+        if (view === 'student') {
+            studentView.style.display = 'block';
+            adminView.style.display = 'none';
+            tabBtns[0].classList.add('active');
+            tabBtns[1].classList.remove('active');
+        } else {
+            studentView.style.display = 'none';
+            adminView.style.display = 'block';
+            tabBtns[1].classList.add('active');
+            tabBtns[0].classList.remove('active');
+            renderAdminTable();
+        }
+    }
+
+    // Handle Student Application Submission
+    document.getElementById('admissionForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const fileInput = document.getElementById('document').files[0];
+        if (!fileInput) return;
+
+        // Convert uploaded file into a Base64 data URL so it can be viewed locally
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const newApplication = {
+                id: Date.now().toString(),
+                name: document.getElementById('fullName').value,
+                email: document.getElementById('email').value,
+                course: document.getElementById('course').value,
+                documentData: event.target.result,
+                fileName: fileInput.name,
+                status: 'Pending',
+                admissionId: 'N/A',
+                year: new Date().getFullYear().toString()
+            };
+
+            const applications = JSON.parse(localStorage.getItem('applicationsData'));
+            applications.push(newApplication);
+            localStorage.setItem('applicationsData', JSON.stringify(applications));
+
+            // Reset form and display success alert
+            document.getElementById('admissionForm').reset();
+            const alertMsg = document.getElementById('alertMessage');
+            alertMsg.style.display = 'block';
+            setTimeout(() => alertMsg.style.display = 'none', 4000);
+        };
+
+        reader.readAsDataURL(fileInput);
+    });
+
+    // Render Table in Admin Dashboard
+    function renderAdminTable() {
+        const tbody = document.getElementById('adminTableBody');
+        const applications = JSON.parse(localStorage.getItem('applicationsData'));
+
+        if (applications.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No student applications found.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        applications.forEach(app => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${app.name}</td>
+                <td>${app.email}</td>
+                <td>${app.course}</td>
+                <td><a href="${app.documentData}" download="${app.fileName}" class="doc-link">Download File</a></td>
+                <td class="status-${app.status}">${app.status}</td>
+                <td><strong>${app.admissionId}</strong></td>
+                <td>
+                    ${app.status === 'Pending' ? `
+                        <button class="action-btn approve-btn" onclick="processApplication('${app.id}', 'Approved')">Approve</button>
+                        <button class="action-btn reject-btn" onclick="processApplication('${app.id}', 'Rejected')">Reject</button>
+                    ` : 'Processed'}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Process Application Approval and Auto-generate Format (AAAA-CCC-YYYY)
+    function processApplication(id, newStatus) {
+        let applications = JSON.parse(localStorage.getItem('applicationsData'));
+        let seq = parseInt(localStorage.getItem('admissionSequence'));
+
+        applications = applications.map(app => {
+            if (app.id === id) {
+                app.status = newStatus;
+                if (newStatus === 'Approved') {
+                    // Format sequence number to 4 digits padded with zeros (0001, 0002...)
+                    const seqPadded = String(seq).padStart(4, '0');
+                    app.admissionId = `${seqPadded}-${app.course}-${app.year}`;
+                    seq++;
+                    localStorage.setItem('admissionSequence', seq.toString());
+                }
+            }
+            return app;
+        });
+
+        localStorage.setItem('applicationsData', JSON.stringify(applications));
+        renderAdminTable();
+    }
+</script>
+
+</body>
+</html>
