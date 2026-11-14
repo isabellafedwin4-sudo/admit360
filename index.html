@@ -1,409 +1,1182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>College Admission Management System</title>
-    
-    <!-- Supabase JS Client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- EmailJS SDK Integration -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript">
-        (function(){
-            emailjs.init("WPSHHd8gunoVs1MIl");
-        })();
-    </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admit360 | VTU Compliant Admission Portal</title>
 
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f4f6f9; padding: 20px; color: #333; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { padding: 12px 24px; border: none; background: #e0e0e0; cursor: pointer; font-weight: bold; border-radius: 6px; font-size: 15px; }
-        .tab-btn.active { background: #007bff; color: white; }
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- EmailJS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <!-- Tesseract.js Client-Side OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
-        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        h2 { margin-bottom: 20px; color: #222; border-bottom: 2px solid #007bff; padding-bottom: 8px; }
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #eff6ff;
+      --accent: #2563eb;
+      --danger: #dc2626;
+      --danger-bg: #fef2f2;
+      --warning: #d97706;
+      --warning-bg: #fffbeb;
+      --success: #059669;
+      --success-bg: #ecfdf5;
+      --border: #cbd5e1;
+      --text: #0f172a;
+      --muted: #475569;
+    }
 
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 6px; font-weight: 600; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-        button.submit-btn { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
-        button.submit-btn:hover { background: #218838; }
-        button:disabled { background-color: #94d3a2; cursor: not-allowed; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { margin: 0; background: #f1f5f9; color: var(--text); line-height: 1.5; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #e0e0e0; padding: 12px; text-align: left; }
-        th { background: #f8f9fa; }
-        .status-Pending { color: #d97706; font-weight: bold; }
-        .status-Approved { color: #16a34a; font-weight: bold; }
-        .status-Rejected { color: #dc2626; font-weight: bold; }
+    /* Navigation */
+    header {
+      background: var(--primary); color: #fff; padding: 1rem 2rem;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+    }
+    header h1 { margin: 0; font-size: 1.4rem; }
+    nav button {
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+      color: #fff; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600;
+    }
+    nav button.active { background: #fff; color: var(--primary); }
 
-        .action-btn { padding: 6px 12px; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: bold; margin-right: 5px; }
-        .approve-btn { background: #16a34a; }
-        .reject-btn { background: #dc2626; }
-        .doc-link { color: #007bff; text-decoration: none; font-weight: 500; }
-        .doc-link:hover { text-decoration: underline; }
+    .container { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; }
 
-        #alertMessage { margin-top: 15px; padding: 10px; border-radius: 4px; display: none; }
-        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .alert-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-    </style>
+    /* Banners & Alerts */
+    .parent-banner {
+      background: var(--warning-bg); border-left: 6px solid var(--warning);
+      padding: 1rem 1.25rem; border-radius: 8px; margin-bottom: 1.5rem;
+      font-weight: 600; color: #78350f;
+    }
+    .alert { padding: 0.75rem 1rem; border-radius: 6px; margin-top: 0.5rem; font-size: 0.9rem; }
+    .alert-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid #fecaca; }
+    .alert-warning { background: var(--warning-bg); color: #92400e; border: 1px solid #fde68a; }
+    .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid #a7f3d0; }
+
+    /* Cards & Fieldsets */
+    .card {
+      background: #fff; border-radius: 10px; padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; border: 1px solid #e2e8f0;
+    }
+    fieldset {
+      border: 2px solid var(--border); border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem;
+    }
+    fieldset.student-box { border-color: #93c5fd; background: #f8fafc; }
+    fieldset.parent-box { border-color: #cbd5e1; background: #fff; }
+    legend { font-weight: 700; padding: 0 0.6rem; color: var(--primary); font-size: 1.05rem; }
+
+    /* Form Controls */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-weight: 600; margin-bottom: 0.35rem; font-size: 0.92rem; }
+    input[type="text"], input[type="email"], input[type="tel"], input[type="date"], select, textarea {
+      width: 100%; padding: 0.65rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem;
+    }
+    input:read-only, select:disabled { background: #e2e8f0; cursor: not-allowed; }
+    .salutation-wrap { display: flex; align-items: center; }
+    .salutation-tag {
+      background: #e2e8f0; padding: 0.65rem 0.75rem; border: 1px solid var(--border);
+      border-right: none; border-radius: 6px 0 0 6px; font-weight: 700; color: var(--muted);
+    }
+    .salutation-wrap input { border-radius: 0 6px 6px 0; }
+
+    /* Buttons */
+    .btn {
+      background: var(--accent); color: #fff; border: none; padding: 0.7rem 1.25rem;
+      border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.95rem;
+    }
+    .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-success { background: var(--success); }
+    .btn-warning { background: var(--warning); }
+    .btn-danger { background: var(--danger); }
+    .btn-outline { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+
+    /* Document Slots */
+    .doc-slot {
+      border: 1px dashed var(--border); padding: 1rem; border-radius: 8px;
+      margin-bottom: 0.75rem; background: #fafafa;
+    }
+    .doc-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .badge { padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; }
+    .badge-req { background: #fee2e2; color: #b91c1c; }
+    .badge-opt { background: #e2e8f0; color: #334155; }
+    .badge-ok { background: #d1fae5; color: #065f46; }
+    .badge-pend { background: #fef3c7; color: #92400e; }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7);
+      display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: 10px; max-width: 650px; width: 100%;
+      max-height: 90vh; overflow-y: auto; padding: 1.5rem;
+    }
+    .modal-wide { max-width: 1200px; }
+
+    /* Split Screen Admin Review */
+    .split-workspace { display: grid; grid-template-columns: 1fr 1.2fr; gap: 1.5rem; }
+    @media (max-width: 850px) { .split-workspace { grid-template-columns: 1fr; } }
+    .doc-viewer-box {
+      border: 1px solid var(--border); border-radius: 8px; height: 520px;
+      background: #1e293b; display: flex; flex-direction: column;
+    }
+    .doc-viewer-box iframe, .doc-viewer-box img {
+      width: 100%; height: 100%; object-fit: contain; border: none; background: #fff;
+    }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; }
+    th { background: #f8fafc; font-weight: 700; }
+    .hidden { display: none !important; }
+  </style>
 </head>
 <body>
 
+<header>
+  <h1>Admit360 &mdash; VTU Admission &amp; Compliance Portal</h1>
+  <nav>
+    <button id="navApply" class="active" onclick="switchView('apply')">Student Registration</button>
+    <button id="navTrack" onclick="switchView('track')">Track / Self-Edit Application</button>
+    <button id="navAdmin" onclick="switchView('admin')">Faculty Admin Workspace</button>
+  </nav>
+</header>
+
 <div class="container">
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchView('student')">Student Application Form</button>
-        <button class="tab-btn" onclick="switchView('admin')">College Admin Panel</button>
+
+  <!-- ========================================================= -->
+  <!-- VIEW 1: STUDENT REGISTRATION FORM                         -->
+  <!-- ========================================================= -->
+  <section id="viewApply">
+    <!-- 4. Explicit Warning Banner at Form Entry -->
+    <div class="parent-banner">
+      ⚠️ Important Notice for Parents: Please allow the <strong>student</strong> to fill out their own academic and personal details to ensure accuracy against official records.
     </div>
 
-    <!-- STUDENT VIEW -->
-    <div id="studentView" class="card">
-        <h2>Student Admission Form</h2>
-        <form id="admissionForm">
-            <div class="form-group">
-                <label for="fullName">Full Name</label>
-                <input type="text" id="fullName" placeholder="e.g., Jane Doe" required>
-            </div>
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" placeholder="jane@example.com" required>
-            </div>
-            <div class="form-group">
-                <label for="course">Select Course</label>
-                <select id="course" required>
-                    <option value="">-- Choose a Course --</option>
-                    <option value="CSE">Computer Science & Engineering (CSE)</option>
-                    <option value="ECE">Electronics & Comm. Engineering (ECE)</option>
-                    <option value="MEC">Mechanical Engineering (MEC)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="document">Upload Qualification Document</label>
-                <input type="file" id="document" required>
-            </div>
-            <button type="submit" id="submitBtn" class="submit-btn">Submit Application</button>
-        </form>
-        <div id="alertMessage"></div>
-
-        <!-- APPLICATION TRACKING CARD -->
-        <div style="margin-top: 30px; border-top: 2px dashed #e0e0e0; padding-top: 20px;">
-            <h3>Check Application Status</h3>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <input type="email" id="trackEmail" placeholder="Enter your registered email address">
-                <button onclick="checkStudentStatus()" class="tab-btn active" style="white-space: nowrap;">Track Status</button>
-            </div>
-            
-            <div id="trackingResult" style="margin-top: 15px; display: none; padding: 15px; border-radius: 6px; background: #f8f9fa; border: 1px solid #e0e0e0;"></div>
+    <!-- 13. Mandatory Student Email OTP Verification Gate -->
+    <div class="card" id="otpGateCard">
+      <h3>Step 1: Student Identity &amp; Email OTP Verification</h3>
+      <p style="color:var(--muted); margin-top:0;">To prevent parent-proxy data entry, the registration form unlocks only after verifying the applicant's personal email inbox.</p>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Student's Personal Email Address *</label>
+          <input type="email" id="otpEmail" autocomplete="new-password" placeholder="student.name@example.com" />
         </div>
+        <div class="form-group">
+          <label>Student's Personal Mobile Number *</label>
+          <input type="tel" id="otpPhone" autocomplete="new-password" placeholder="+91 9876543210" />
+        </div>
+      </div>
+      <div style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+        <button type="button" class="btn" onclick="sendStudentOTP()">Send Verification OTP</button>
+        <input type="text" id="otpCodeInput" placeholder="Enter 6-digit OTP" style="max-width:180px;" class="hidden" />
+        <button type="button" id="verifyOtpBtn" class="btn btn-success hidden" onclick="verifyStudentOTP()">Verify &amp; Unlock Form</button>
+        <!-- 9. DigiLocker Future Upgrade Hook -->
+        <button type="button" class="btn btn-outline" onclick="triggerDigiLockerStub()" title="API Setu Integration">
+          Fetch via DigiLocker / APAAR ID
+        </button>
+      </div>
+      <div id="otpStatus"></div>
     </div>
 
-    <!-- ADMIN VIEW -->
-    <div id="adminView" class="card" style="display: none;">
-        
-        <!-- ADMIN LOGIN FORM -->
-        <div id="adminLoginForm" style="max-width: 400px; margin: 0 auto; padding: 10px 0;">
-            <h2>Admin Login</h2>
-            <div class="form-group" style="margin-top: 15px;">
-                <label for="adminEmail">Email Address</label>
-                <input type="email" id="adminEmail" placeholder="admin@college.edu" required>
+    <!-- Main Form (Unlocked after OTP verification or Correction Token load) -->
+    <form id="admissionForm" class="hidden" autocomplete="off" onsubmit="openReviewModal(event)">
+      <input type="hidden" id="editModeRecordId" value="" />
+
+      <!-- 5. Client-Side OCR Auto-Fill (Tesseract.js) -->
+      <div class="card">
+        <h3>Step 2: Upload 10th Marks Card First (Auto-Fill &amp; OCR Verification)</h3>
+        <p style="font-size:0.9rem; color:var(--muted);">Upload a clear scan/photo (&ge; 800&times;600px) of your 10th Marks Card. Our browser OCR will scan your names to prevent spelling mistakes.</p>
+        <div class="doc-slot">
+          <div class="doc-header">
+            <label style="margin:0;">10th Std Marks Card (Mandatory) *</label>
+            <span class="badge badge-req">VTU Mandatory</span>
+          </div>
+          <input type="file" id="file10th" accept="image/*,.pdf" onchange="handleFileUpload(this, '10th', true)" style="margin-top:0.5rem;" />
+          <div id="ocrStatus" class="alert alert-warning hidden">Scanning 10th Marks Card with OCR... please wait.</div>
+          <div id="resAlert10th"></div>
+        </div>
+      </div>
+
+      <!-- 1. Separate Visual Section: Student Personal Details -->
+      <fieldset class="student-box" id="fieldsetStudent">
+        <legend>Section A: Student Personal Details (Applicant Only)</legend>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="studentName">Student's Full Name (Exact spelling as per 10th Marks Card) *</label>
+            <!-- 10. Autofill Blocking via autocomplete="new-password" & randomized name -->
+            <input type="text" id="studentName" name="field_stu_991" autocomplete="new-password" required
+                   placeholder="Student's Full Name (Exact spelling as per 10th Marks Card)"
+                   oninput="runIdentityChecks()" onblur="runIdentityChecks()" />
+            <div id="ocrMismatchStudent" class="alert alert-warning hidden">
+              Warning: Entered name differs from the uploaded 10th Marks Card.
             </div>
-            <div class="form-group">
-                <label for="adminPassword">Password</label>
-                <input type="password" id="adminPassword" placeholder="••••••••" required>
+          </div>
+
+          <div class="form-group">
+            <label for="studentDob">Student's Date of Birth (As per 10th Marks Card) *</label>
+            <input type="date" id="studentDob" name="field_dob_882" autocomplete="new-password" required onchange="validateStudentAge()" />
+            <div id="ageWarningBox"></div>
+          </div>
+        </div>
+        <div id="duplicateNameAlert" class="alert alert-danger hidden">
+          Student name and Parent name cannot be identical.
+        </div>
+      </fieldset>
+
+      <!-- 1. Separate Visual Section: Parent / Guardian Details -->
+      <fieldset class="parent-box" id="fieldsetParent">
+        <legend>Section B: Parent / Guardian Details</legend>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="fatherName">Father's Name (As per official records) *</label>
+            <div class="salutation-wrap">
+              <span class="salutation-tag">Mr.</span>
+              <input type="text" id="fatherName" name="field_fth_773" autocomplete="new-password" required
+                     placeholder="Father's Name (As per official records)"
+                     oninput="runIdentityChecks()" onblur="runIdentityChecks()" />
             </div>
-            <button onclick="handleAdminLogin()" class="submit-btn" style="background: #007bff;">Log In</button>
-            <div id="loginError" style="color: red; margin-top: 10px; display: none;"></div>
+            <div id="ocrMismatchFather" class="alert alert-warning hidden">
+              Warning: Entered name differs from the uploaded 10th Marks Card.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="motherName">Mother's Name (As per official records) *</label>
+            <div class="salutation-wrap">
+              <span class="salutation-tag">Mrs. / Ms.</span>
+              <input type="text" id="motherName" name="field_mth_664" autocomplete="new-password" required
+                     placeholder="Mother's Name (As per official records)"
+                     oninput="runIdentityChecks()" onblur="runIdentityChecks()" />
+            </div>
+            <div id="ocrMismatchMother" class="alert alert-warning hidden">
+              Warning: Entered name differs from the uploaded 10th Marks Card.
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- 7. Dynamic VTU Eligibility & Document Rule Engine -->
+      <fieldset id="fieldsetDocs">
+        <legend>Section C: Qualifying Board &amp; VTU Mandatory Documents</legend>
+        <div class="form-group">
+          <label for="qualifyingBoard">12th / Qualifying Board *</label>
+          <select id="qualifyingBoard" required onchange="applyVtuBoardRules()">
+            <option value="">-- Select Qualifying Board --</option>
+            <option value="Karnataka PUC">Karnataka State Board (PUC)</option>
+            <option value="CBSE">CBSE</option>
+            <option value="ICSE">ICSE</option>
+            <option value="Other State">Other State Board / Diploma</option>
+          </select>
         </div>
 
-        <!-- ADMIN DASHBOARD -->
-        <div id="adminContent" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 style="border: none; margin: 0;">College Admission Management</h2>
-                <button onclick="handleAdminLogout()" class="action-btn reject-btn">Log Out</button>
-            </div>
-            <hr style="margin-bottom: 20px;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Student Name</th>
-                        <th>Email</th>
-                        <th>Course</th>
-                        <th>Document</th>
-                        <th>Status</th>
-                        <th>Admission ID</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="adminTableBody"></tbody>
-            </table>
+        <!-- 11. Slot Separation for VTU Requirements -->
+        <div class="doc-slot">
+          <div class="doc-header">
+            <label style="margin:0;">12th / PUC Marks Card *</label>
+            <span class="badge badge-req">Required</span>
+          </div>
+          <input type="file" id="file12th" accept="image/*,.pdf" required onchange="handleFileUpload(this, '12th', false)" />
+          <div id="resAlert12th"></div>
         </div>
 
+        <div class="doc-slot">
+          <div class="doc-header">
+            <label style="margin:0;">Transfer Certificate (TC)</label>
+            <span class="badge badge-req" id="tcBadge">Mandatory (or Undertaking)</span>
+          </div>
+          <input type="file" id="fileTC" accept="image/*,.pdf" onchange="handleFileUpload(this, 'tc', false)" />
+          <div style="margin-top:0.5rem;">
+            <label style="font-weight:400; font-size:0.88rem;">
+              <input type="checkbox" id="awaitingTC" onchange="toggleUndertaking()" />
+              Document Awaited (Original TC not yet issued by previous institution)
+            </label>
+          </div>
+          <div id="resAlerttc"></div>
+        </div>
+
+        <div class="doc-slot">
+          <div class="doc-header">
+            <label style="margin:0;">Study Certificate (7 Years Karnataka Study)</label>
+            <span class="badge badge-opt">VTU Verification</span>
+          </div>
+          <input type="file" id="fileStudy" accept="image/*,.pdf" onchange="handleFileUpload(this, 'study', false)" />
+          <div id="resAlertstudy"></div>
+        </div>
+
+        <div class="doc-slot" id="migrationSlot">
+          <div class="doc-header">
+            <label style="margin:0;">Migration Certificate (Mandatory for CBSE / ICSE / Non-Karnataka Boards)</label>
+            <span class="badge badge-opt" id="migBadge">Conditional</span>
+          </div>
+          <input type="file" id="fileMigration" accept="image/*,.pdf" onchange="handleFileUpload(this, 'migration', false)" />
+          <div style="margin-top:0.5rem;">
+            <label style="font-weight:400; font-size:0.88rem;">
+              <input type="checkbox" id="awaitingMigration" onchange="toggleUndertaking()" />
+              Document Awaited (Migration Certificate pending from board)
+            </label>
+          </div>
+          <div id="resAlertmigration"></div>
+        </div>
+
+        <!-- 7. Digital Undertaking Agreement for Awaited Documents -->
+        <div id="undertakingBox" class="alert alert-warning hidden" style="margin-top:1rem;">
+          <strong>VTU Provisional Admission Undertaking Agreement:</strong><br/>
+          You have indicated that mandatory certificates (TC / Migration) are currently awaited. Under VTU regulations, your admission will be marked as <strong>"Provisionally Admitted (Documents Pending)"</strong>.
+          <div class="form-group" style="margin-top:0.5rem;">
+            <label>Commit to Hard Submission Deadline Date *</label>
+            <input type="date" id="undertakingDeadline" />
+          </div>
+          <label style="font-weight:600;">
+            <input type="checkbox" id="signUndertaking" />
+            I digitally sign this undertaking and agree that failure to submit original TC/Migration certificates by the deadline above will result in automatic cancellation of my VTU admission.
+          </label>
+        </div>
+      </fieldset>
+
+      <!-- 1 & 4. Mandatory Declarations -->
+      <div class="card">
+        <div class="form-group">
+          <label style="display:flex; gap:0.6rem; align-items:flex-start; cursor:pointer;">
+            <input type="checkbox" id="studentSelfCheck" required style="margin-top:0.25rem;" />
+            <span>I am filling this form myself as the applicant.</span>
+          </label>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label style="display:flex; gap:0.6rem; align-items:flex-start; cursor:pointer;">
+            <input type="checkbox" id="accuracyCheck" required style="margin-top:0.25rem;" />
+            <span>I confirm that all names and details entered above match my official school records character-for-character. I understand incorrect data may lead to rejection during corporate background verification.</span>
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" id="preSubmitBtn" class="btn" style="width:100%; font-size:1.05rem; padding:0.9rem;">
+        Proceed to Role Verification &amp; Review &rarr;
+      </button>
+    </form>
+  </section>
+
+  <!-- ========================================================= -->
+  <!-- VIEW 2: STUDENT SELF-SERVICE TRACK & 48-HR EDIT PORTAL    -->
+  <!-- ========================================================= -->
+  <section id="viewTrack" class="hidden">
+    <div class="card">
+      <h3>Track Application &amp; 48-Hour Self-Edit / Correction Portal</h3>
+      <p style="color:var(--muted);">Enter your registered email and tracking PIN to view status, fix typos within 48 hours of submission, or complete faculty-flagged corrections.</p>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Registered Student Email</label>
+          <input type="email" id="trackEmail" placeholder="student@example.com" />
+        </div>
+        <div class="form-group">
+          <label>6-Character Tracking PIN / Correction Token</label>
+          <input type="text" id="trackToken" placeholder="e.g. A9X4K2" />
+        </div>
+      </div>
+      <button class="btn" onclick="lookupApplication()">Access Application</button>
+      <div id="trackResult" style="margin-top:1.25rem;"></div>
     </div>
+  </section>
+
+  <!-- ========================================================= -->
+  <!-- VIEW 3: FACULTY ADMIN SPLIT-SCREEN WORKSPACE              -->
+  <!-- ========================================================= -->
+  <section id="viewAdmin" class="hidden">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1rem;">
+        <div>
+          <h3 style="margin:0;">Faculty Verification &amp; VTU Compliance Dashboard</h3>
+          <p style="margin:0.25rem 0 0; color:var(--muted); font-size:0.9rem;">Cross-verify student entries side-by-side against uploaded marks cards.</p>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn btn-outline" onclick="loadAdminApplications()">Refresh List</button>
+          <!-- 12. Generate VTU Master Sheet CSV Export -->
+          <button class="btn btn-success" onclick="exportVtuMasterCsv()">Export Verified Data (VTU CSV)</button>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Board</th>
+              <th>VTU Status</th>
+              <th>Docs Checklist</th>
+              <th>Audit</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="adminTableBody">
+            <tr><td colspan="6">Click "Refresh List" to load applications...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ========================================================= -->
+<!-- 6. TWO-STEP "STUDENT LOCK & REVIEW" SUMMARY MODAL         -->
+<!-- ========================================================= -->
+<div class="modal-backdrop" id="reviewModal">
+  <div class="modal">
+    <h3 style="margin-top:0; color:var(--primary);">Step 3: Mandatory Role &amp; Relationship Confirmation</h3>
+    <p style="font-size:0.9rem; color:var(--muted);">Verify each role below to ensure parent and student names were not swapped.</p>
+
+    <div class="card" style="background:#f8fafc;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+        <div><strong>Applicant (Student):</strong> <span id="revStudent"></span></div>
+        <button type="button" class="btn btn-outline" id="btnConfStu" onclick="confirmRole('stu')">Confirm Relationship</button>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+        <div><strong>Father:</strong> Mr. <span id="revFather"></span></div>
+        <button type="button" class="btn btn-outline" id="btnConfFth" onclick="confirmRole('fth')">Confirm Relationship</button>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div><strong>Mother:</strong> Mrs./Ms. <span id="revMother"></span></div>
+        <button type="button" class="btn btn-outline" id="btnConfMth" onclick="confirmRole('mth')">Confirm Relationship</button>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+      <button type="button" class="btn btn-outline" onclick="closeModal('reviewModal')">Go Back &amp; Edit</button>
+      <button type="button" id="finalSubmitBtn" class="btn btn-success" disabled onclick="submitFinalApplication()">
+        Submit Final Application
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- 2, 8, 12. SPLIT-SCREEN FACULTY VERIFICATION MODAL         -->
+<!-- ========================================================= -->
+<div class="modal-backdrop" id="adminSplitModal">
+  <div class="modal modal-wide">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+      <h3 style="margin:0;">Side-by-Side Document Verification &amp; Audit Editor</h3>
+      <button class="btn btn-outline" onclick="closeModal('adminSplitModal')">Close &times;</button>
+    </div>
+
+    <div class="split-workspace">
+      <!-- Left Column: Inline Editable Fields -->
+      <div>
+        <input type="hidden" id="admRecordId" />
+        <div class="form-group">
+          <label>Student's Full Name (As per 10th Marks Card)</label>
+          <input type="text" id="admStudentName" />
+        </div>
+        <div class="form-group">
+          <label>Father's Name</label>
+          <input type="text" id="admFatherName" />
+        </div>
+        <div class="form-group">
+          <label>Mother's Name</label>
+          <input type="text" id="admMotherName" />
+        </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Date of Birth</label>
+            <input type="date" id="admDob" />
+          </div>
+          <div class="form-group">
+            <label>Qualifying Board</label>
+            <input type="text" id="admBoard" />
+          </div>
+        </div>
+
+        <!-- 3. Granular Document Checklist Status -->
+        <h4>VTU Granular Document Status</h4>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>10th Marks Card</label>
+            <select id="admStatus10th">
+              <option value="Uploaded">Uploaded</option>
+              <option value="Missing">Missing</option>
+              <option value="Verified">Verified</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Transfer Certificate (TC)</label>
+            <select id="admStatusTC">
+              <option value="Uploaded">Uploaded</option>
+              <option value="Missing">Missing</option>
+              <option value="Verified">Verified</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Migration Certificate</label>
+            <select id="admStatusMig">
+              <option value="Not Required">Not Required</option>
+              <option value="Uploaded">Uploaded</option>
+              <option value="Missing">Missing</option>
+              <option value="Verified">Verified</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Overall Admission Status</label>
+            <select id="admOverallStatus">
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved (VTU Ready)</option>
+              <option value="Provisionally Admitted (Documents Pending)">Provisionally Admitted (Documents Pending)</option>
+              <option value="Correction Requested">Correction Requested</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 8. Faculty "Flag & Unlock for Correction" Workflow -->
+        <div class="card" style="background:#fffbeb; padding:0.9rem; margin-bottom:1rem;">
+          <strong>Flag Specific Fields for Student Correction:</strong>
+          <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin:0.5rem 0; font-size:0.85rem;">
+            <label><input type="checkbox" class="flag-chk" value="studentName" /> Student Name</label>
+            <label><input type="checkbox" class="flag-chk" value="fatherName" /> Father's Name</label>
+            <label><input type="checkbox" class="flag-chk" value="motherName" /> Mother's Name</label>
+            <label><input type="checkbox" class="flag-chk" value="file12th" /> 12th Marks Card</label>
+            <label><input type="checkbox" class="flag-chk" value="fileTC" /> TC</label>
+            <label><input type="checkbox" class="flag-chk" value="fileMigration" /> Migration Cert</label>
+          </div>
+          <input type="text" id="admCorrectionNote" placeholder="Faculty note to student (e.g., Mother's name spelling does not match 10th marks card)" />
+        </div>
+
+        <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+          <button class="btn btn-success" onclick="saveAdminReview('Approved')">Verify &amp; Approve</button>
+          <button class="btn btn-warning" onclick="saveAdminReview('Correction Requested')">Request Correction (Email Student)</button>
+          <button class="btn" onclick="saveAdminReview('SaveEdits')">Save Manual Edits &amp; Audit Log</button>
+        </div>
+      </div>
+
+      <!-- Right Column: Embedded Document Viewer -->
+      <div>
+        <div style="display:flex; gap:0.4rem; margin-bottom:0.5rem; flex-wrap:wrap;">
+          <button type="button" class="btn btn-outline" onclick="switchDocPreview('10th')">View 10th Card</button>
+          <button type="button" class="btn btn-outline" onclick="switchDocPreview('12th')">View 12th Card</button>
+          <button type="button" class="btn btn-outline" onclick="switchDocPreview('tc')">View TC</button>
+          <button type="button" class="btn btn-outline" onclick="switchDocPreview('migration')">View Migration</button>
+        </div>
+        <div class="doc-viewer-box" id="docPreviewContainer">
+          <div style="color:#fff; padding:2rem; text-align:center;">Select a document tab above to inspect.</div>
+        </div>
+        <div style="margin-top:0.75rem;">
+          <strong>Audit Trail History:</strong>
+          <ul id="admAuditList" style="font-size:0.82rem; color:var(--muted); max-height:110px; overflow-y:auto; padding-left:1.2rem;"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-    // 1. SUPABASE CREDENTIALS
-    const SUPABASE_URL = 'https://xdzrrhxvljvvynflrrhz.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_Kl3CKdszTgL7QT4x8MV8eQ_2Z8IUSdP'; 
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // =========================================================================
+  // CONFIGURATION (Supabase & EmailJS Credentials)
+  // =========================================================================
+  const SUPABASE_URL = 'https://xdzrrhxvljvvynflrrhz.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_Kl3CKdszTgL7QT4x8MV8eQ_2Z8IUSdP';
+  const EMAILJS_PUBLIC_KEY = "WPSHHd8gunoVs1MIl";
+  const EMAILJS_SERVICE_ID = "YOUR_EMAILJS_SERVICE_ID";
+  const EMAILJS_TEMPLATE_ID = "YOUR_EMAILJS_TEMPLATE_ID";
 
-    // 2. TAB SWITCHING & AUTH CHECK
-    async function switchView(view) {
-        const studentView = document.getElementById('studentView');
-        const adminView = document.getElementById('adminView');
-        const tabBtns = document.querySelectorAll('.tab-btn');
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  emailjs.init(EMAILJS_PUBLIC_KEY);
 
-        if (view === 'student') {
-            studentView.style.display = 'block';
-            adminView.style.display = 'none';
-            tabBtns[0].classList.add('active');
-            tabBtns[1].classList.remove('active');
-        } else {
-            studentView.style.display = 'none';
-            adminView.style.display = 'block';
-            tabBtns[1].classList.add('active');
-            tabBtns[0].classList.remove('active');
+  // State Management
+  let generatedOtp = null;
+  let ocrExtractedText = "";
+  let uploadedFiles = {};
+  let roleConfirmations = { stu: false, fth: false, mth: false };
+  let activeAdminRecord = null;
+  let cachedApplications = [];
 
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                showAdminDashboard();
-            } else {
-                showAdminLoginForm();
-            }
+  // =========================================================================
+  // NAVIGATION & URL CORRECTION LINK HANDLER
+  // =========================================================================
+  function switchView(view) {
+    ['viewApply', 'viewTrack', 'viewAdmin'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    ['navApply', 'navTrack', 'navAdmin'].forEach(id => document.getElementById(id).classList.remove('active'));
+
+    if (view === 'apply') {
+      document.getElementById('viewApply').classList.remove('hidden');
+      document.getElementById('navApply').classList.add('active');
+    } else if (view === 'track') {
+      document.getElementById('viewTrack').classList.remove('hidden');
+      document.getElementById('navTrack').classList.add('active');
+    } else if (view === 'admin') {
+      document.getElementById('viewAdmin').classList.remove('hidden');
+      document.getElementById('navAdmin').classList.add('active');
+      loadAdminApplications();
+    }
+  }
+
+  // Handle Direct Correction Link (?token=XYZ&email=abc@...)
+  window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('token') && params.get('email')) {
+      switchView('track');
+      document.getElementById('trackEmail').value = params.get('email');
+      document.getElementById('trackToken').value = params.get('token');
+      lookupApplication();
+    }
+  });
+
+  // =========================================================================
+  // 13. STUDENT EMAIL OTP VERIFICATION & 9. DIGILOCKER STUB
+  // =========================================================================
+  async function sendStudentOTP() {
+    const email = document.getElementById('otpEmail').value.trim();
+    const phone = document.getElementById('otpPhone').value.trim();
+    if (!email || !phone) {
+      alert("Please enter both the student's personal email and mobile number.");
+      return;
+    }
+    generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    try {
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_email: email,
+        subject: "Admit360 Student Verification OTP",
+        message: `Your student registration verification OTP is: ${generatedOtp}. Please do not share this with anyone else.`
+      });
+      document.getElementById('otpStatus').innerHTML = `<div class="alert alert-success">OTP sent to <strong>${email}</strong>. Check your inbox to unlock the form.</div>`;
+    } catch (err) {
+      // Fallback display for testing if EmailJS template isn't configured yet
+      document.getElementById('otpStatus').innerHTML = `<div class="alert alert-warning">OTP generated (Demo/Test Mode: <strong>${generatedOtp}</strong>).</div>`;
+    }
+
+    document.getElementById('otpCodeInput').classList.remove('hidden');
+    document.getElementById('verifyOtpBtn').classList.remove('hidden');
+  }
+
+  function verifyStudentOTP() {
+    const entered = document.getElementById('otpCodeInput').value.trim();
+    if (entered === generatedOtp) {
+      document.getElementById('otpGateCard').classList.add('hidden');
+      document.getElementById('admissionForm').classList.remove('hidden');
+    } else {
+      alert("Invalid OTP. Please check the code sent to the student's email.");
+    }
+  }
+
+  function triggerDigiLockerStub() {
+    alert("DigiLocker / APAAR ID (API Setu) Integration Ready: In production with institutional API Setu credentials, this opens the MeriPehchaan OAuth popup to fetch cryptographically verified CBSE/Karnataka PUC XML mark sheets directly.");
+  }
+
+  // =========================================================================
+  // 11. RESOLUTION PRE-CHECK & 5. CLIENT-SIDE OCR (TESSERACT.JS)
+  // =========================================================================
+  async function handleFileUpload(input, docKey, runOcr) {
+    const file = input.files[0];
+    const alertBox = document.getElementById(`resAlert${docKey}`);
+    if (!file) return;
+
+    // Image Resolution Check (>= 800x600)
+    if (file.type.startsWith('image/')) {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = async () => {
+        if (img.width < 800 || img.height < 600) {
+          alertBox.innerHTML = `<div class="alert alert-danger">Low resolution image (${img.width}x${img.height}px). Please upload a clear scan of at least 800&times;600 pixels.</div>`;
+          input.value = "";
+          delete uploadedFiles[docKey];
+          URL.revokeObjectURL(objectUrl);
+          return;
         }
-    }
+        alertBox.innerHTML = `<div class="alert alert-success">Image quality verified (${img.width}&times;${img.height}px).</div>`;
+        uploadedFiles[docKey] = file;
 
-    // 3. ADMIN AUTHENTICATION
-    async function handleAdminLogin() {
-        const email = document.getElementById('adminEmail').value;
-        const password = document.getElementById('adminPassword').value;
-        const loginError = document.getElementById('loginError');
-
-        loginError.style.display = 'none';
-
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
-        if (error) {
-            loginError.textContent = error.message;
-            loginError.style.display = 'block';
-        } else {
-            showAdminDashboard();
+        if (runOcr) {
+          await extractMarksCardText(file);
         }
+        URL.revokeObjectURL(objectUrl);
+      };
+      img.src = objectUrl;
+    } else {
+      // PDF accepted directly
+      alertBox.innerHTML = `<div class="alert alert-success">PDF document attached (${(file.size / 1024).toFixed(1)} KB).</div>`;
+      uploadedFiles[docKey] = file;
     }
+  }
 
-    async function handleAdminLogout() {
-        await supabaseClient.auth.signOut();
-        showAdminLoginForm();
-    }
+  async function extractMarksCardText(file) {
+    const ocrStatus = document.getElementById('ocrStatus');
+    ocrStatus.classList.remove('hidden');
+    ocrStatus.textContent = "Scanning 10th Marks Card with Tesseract OCR... please wait.";
 
-    function showAdminDashboard() {
-        document.getElementById('adminLoginForm').style.display = 'none';
-        document.getElementById('adminContent').style.display = 'block';
-        renderAdminTable();
-    }
+    try {
+      const result = await Tesseract.recognize(file, 'eng');
+      ocrExtractedText = result.data.text.toUpperCase();
+      ocrStatus.className = "alert alert-success";
+      ocrStatus.textContent = "10th Marks Card scanned! Enter names below—real-time cross-verification against your marks card is active.";
 
-    function showAdminLoginForm() {
-        document.getElementById('adminLoginForm').style.display = 'block';
-        document.getElementById('adminContent').style.display = 'none';
-    }
-
-    // 4. SUBMIT APPLICATION FORM
-    document.getElementById('admissionForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const submitBtn = document.getElementById('submitBtn');
-        const alertMsg = document.getElementById('alertMessage');
-        const fileInput = document.getElementById('document').files[0];
-
-        if (!fileInput) return;
-
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Uploading & Submitting...";
-        alertMsg.style.display = 'none';
-
-        try {
-            const fileExt = fileInput.name.split('.').pop();
-            const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-            const filePath = `documents/${fileName}`;
-
-            const { error: storageError } = await supabaseClient.storage
-                .from('student-documents')
-                .upload(filePath, fileInput);
-
-            if (storageError) throw storageError;
-
-            const { data: publicUrlData } = supabaseClient.storage
-                .from('student-documents')
-                .getPublicUrl(filePath);
-
-            const { error: dbError } = await supabaseClient
-                .from('applications')
-                .insert([{
-                    student_name: document.getElementById('fullName').value,
-                    email: document.getElementById('email').value,
-                    course_name: document.getElementById('course').value,
-                    document_url: publicUrlData.publicUrl
-                }]);
-
-            if (dbError) throw dbError;
-
-            alertMsg.className = 'alert-success';
-            alertMsg.textContent = 'Application submitted successfully!';
-            alertMsg.style.display = 'block';
-            document.getElementById('admissionForm').reset();
-
-        } catch (error) {
-            alertMsg.className = 'alert-error';
-            alertMsg.textContent = 'Error: ' + error.message;
-            alertMsg.style.display = 'block';
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = "Submit Application";
+      // Attempt heuristic extraction for Name / Father / Mother lines
+      const lines = ocrExtractedText.split('\n').map(l => l.trim()).filter(Boolean);
+      lines.forEach(line => {
+        if (line.includes("CANDIDATE") || line.includes("STUDENT NAME")) {
+          const val = line.split(':').pop().trim();
+          if (val.length > 2 && !document.getElementById('studentName').value) {
+            document.getElementById('studentName').value = val;
+          }
         }
+        if (line.includes("FATHER")) {
+          const val = line.split(':').pop().trim();
+          if (val.length > 2 && !document.getElementById('fatherName').value) {
+            document.getElementById('fatherName').value = val;
+          }
+        }
+        if (line.includes("MOTHER")) {
+          const val = line.split(':').pop().trim();
+          if (val.length > 2 && !document.getElementById('motherName').value) {
+            document.getElementById('motherName').value = val;
+          }
+        }
+      });
+      runIdentityChecks();
+    } catch (e) {
+      ocrStatus.className = "alert alert-warning";
+      ocrStatus.textContent = "OCR scan skipped. Please type names carefully as per 10th Marks Card.";
+    }
+  }
+
+  // =========================================================================
+  // 10. DUPLICATE/SWAPPED NAME DETECTION, OCR MISMATCH & AGE CHECK
+  // =========================================================================
+  function runIdentityChecks() {
+    const stu = document.getElementById('studentName').value.trim().toUpperCase();
+    const fth = document.getElementById('fatherName').value.trim().toUpperCase();
+    const mth = document.getElementById('motherName').value.trim().toUpperCase();
+
+    // Duplicate check
+    const dupAlert = document.getElementById('duplicateNameAlert');
+    const isDuplicate = (stu && fth && stu === fth) || (stu && mth && stu === mth) || (fth && mth && fth === mth);
+    dupAlert.classList.toggle('hidden', !isDuplicate);
+
+    // OCR Mismatch Warning
+    if (ocrExtractedText.length > 20) {
+      document.getElementById('ocrMismatchStudent').classList.toggle('hidden', !stu || ocrExtractedText.includes(stu));
+      document.getElementById('ocrMismatchFather').classList.toggle('hidden', !fth || ocrExtractedText.includes(fth));
+      document.getElementById('ocrMismatchMother').classList.toggle('hidden', !mth || ocrExtractedText.includes(mth));
+    }
+  }
+
+  function validateStudentAge() {
+    const dobVal = document.getElementById('studentDob').value;
+    const box = document.getElementById('ageWarningBox');
+    if (!dobVal) return;
+
+    const dob = new Date(dobVal);
+    const ageDiff = Date.now() - dob.getTime();
+    const age = Math.floor(ageDiff / (1000 * 60 * 60 * 24 * 365.25));
+
+    if (age < 16 || age > 25) {
+      box.innerHTML = `<div class="alert alert-danger">Based on this Date of Birth, the applicant is <strong>${age} years old</strong>. Did you enter a parent's birth date by mistake?</div>`;
+    } else {
+      box.innerHTML = `<div class="alert alert-success">Verified applicant age: ${age} years.</div>`;
+    }
+  }
+
+  // =========================================================================
+  // 7. DYNAMIC VTU ELIGIBILITY & DOCUMENT RULE ENGINE
+  // =========================================================================
+  function applyVtuBoardRules() {
+    const board = document.getElementById('qualifyingBoard').value;
+    const migInput = document.getElementById('fileMigration');
+    const migBadge = document.getElementById('migBadge');
+    const awaitingMig = document.getElementById('awaitingMigration').checked;
+
+    const requiresMigration = ['CBSE', 'ICSE', 'Other State'].includes(board);
+
+    if (requiresMigration) {
+      migBadge.textContent = "VTU Mandatory for " + board;
+      migBadge.className = "badge badge-req";
+      migInput.required = !awaitingMig;
+    } else {
+      migBadge.textContent = "Not Required for Karnataka PUC";
+      migBadge.className = "badge badge-opt";
+      migInput.required = false;
+    }
+  }
+
+  function toggleUndertaking() {
+    const awaitingTC = document.getElementById('awaitingTC').checked;
+    const awaitingMig = document.getElementById('awaitingMigration').checked;
+    const box = document.getElementById('undertakingBox');
+    const deadline = document.getElementById('undertakingDeadline');
+    const signChk = document.getElementById('signUndertaking');
+
+    const needsUndertaking = awaitingTC || awaitingMig;
+    box.classList.toggle('hidden', !needsUndertaking);
+    deadline.required = needsUndertaking;
+    signChk.required = needsUndertaking;
+    applyVtuBoardRules();
+  }
+
+  // =========================================================================
+  // 6. TWO-STEP "STUDENT LOCK & REVIEW" SUMMARY SCREEN
+  // =========================================================================
+  function openReviewModal(e) {
+    e.preventDefault();
+    if (!document.getElementById('duplicateNameAlert').classList.contains('hidden')) {
+      alert("Please fix duplicate Student/Parent names before proceeding.");
+      return;
+    }
+
+    const stu = document.getElementById('studentName').value.trim();
+    const fth = document.getElementById('fatherName').value.trim();
+    const mth = document.getElementById('motherName').value.trim();
+
+    document.getElementById('revStudent').textContent = stu;
+    document.getElementById('revFather').textContent = fth;
+    document.getElementById('revMother').textContent = mth;
+
+    roleConfirmations = { stu: false, fth: false, mth: false };
+    ['stu', 'fth', 'mth'].forEach(k => {
+      const btn = document.getElementById(`btnConf${k.charAt(0).toUpperCase() + k.slice(1)}`);
+      btn.className = "btn btn-outline";
+      btn.textContent = `Yes, ${k === 'stu' ? stu : k === 'fth' ? fth : mth} is the ${k === 'stu' ? 'Student' : k === 'fth' ? 'Father' : 'Mother'}`;
+    });
+    document.getElementById('finalSubmitBtn').disabled = true;
+    document.getElementById('reviewModal').classList.add('open');
+  }
+
+  function confirmRole(roleKey) {
+    roleConfirmations[roleKey] = true;
+    const btn = document.getElementById(`btnConf${roleKey.charAt(0).toUpperCase() + roleKey.slice(1)}`);
+    btn.className = "btn btn-success";
+    btn.textContent = "Confirmed ✓";
+
+    if (roleConfirmations.stu && roleConfirmations.fth && roleConfirmations.mth) {
+      document.getElementById('finalSubmitBtn').disabled = false;
+    }
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  // =========================================================================
+  // FINAL SUBMISSION TO SUPABASE STORAGE & DATABASE
+  // =========================================================================
+  async function submitFinalApplication() {
+    const btn = document.getElementById('finalSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = "Uploading Documents & Saving...";
+
+    const email = document.getElementById('otpEmail').value.trim();
+    const phone = document.getElementById('otpPhone').value.trim();
+    const board = document.getElementById('qualifyingBoard').value;
+    const awaitingTC = document.getElementById('awaitingTC').checked;
+    const awaitingMig = document.getElementById('awaitingMigration').checked;
+    const requiresMig = ['CBSE', 'ICSE', 'Other State'].includes(board);
+
+    // Upload files to Supabase Storage bucket 'student-documents'
+    const docUrls = {};
+    for (const [key, file] of Object.entries(uploadedFiles)) {
+      const path = `${Date.now()}_${key}_${file.name.replace(/\s+/g, '_')}`;
+      const { error: upErr } = await sb.storage.from('student-documents').upload(path, file);
+      if (!upErr) {
+        const { data: pub } = sb.storage.from('student-documents').getPublicUrl(path);
+        docUrls[key] = pub.publicUrl;
+      }
+    }
+
+    // 3 & 11. Build VTU Document Deficit & Granular Checklist
+    const missingDocs = [];
+    if (!docUrls['10th'] && !uploadedFiles['10th']) missingDocs.push("10th Marks Card");
+    if (!docUrls['12th'] && !uploadedFiles['12th']) missingDocs.push("12th Marks Card");
+    if (!docUrls['tc']) missingDocs.push("Transfer Certificate (TC)");
+    if (requiresMig && !docUrls['migration']) missingDocs.push("Migration Certificate");
+
+    const isProvisional = missingDocs.length > 0 || awaitingTC || awaitingMig;
+    const admissionStatus = isProvisional ? "Provisionally Admitted (Documents Pending)" : "Pending";
+    const editToken = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    const payload = {
+      email,
+      phone,
+      student_name: document.getElementById('studentName').value.trim(),
+      father_name: document.getElementById('fatherName').value.trim(),
+      mother_name: document.getElementById('motherName').value.trim(),
+      dob: document.getElementById('studentDob').value,
+      qualifying_board: board,
+      status: admissionStatus,
+      status_10th_marks_card: docUrls['10th'] ? 'Uploaded' : 'Missing',
+      status_12th_marks_card: docUrls['12th'] ? 'Uploaded' : 'Missing',
+      status_transfer_certificate: docUrls['tc'] ? 'Uploaded' : 'Missing',
+      status_study_certificate: docUrls['study'] ? 'Uploaded' : 'Missing',
+      status_migration_certificate: !requiresMig ? 'Not Required' : (docUrls['migration'] ? 'Uploaded' : 'Missing'),
+      doc_urls: docUrls,
+      missing_documents: missingDocs,
+      undertaking_signed: document.getElementById('signUndertaking').checked,
+      undertaking_deadline: document.getElementById('undertakingDeadline').value || null,
+      flagged_fields: [],
+      edit_token: editToken,
+      audit_log: [{ timestamp: new Date().toISOString(), action: "Application submitted by verified student OTP." }]
+    };
+
+    const editId = document.getElementById('editModeRecordId').value;
+    let dbRes;
+    if (editId) {
+      dbRes = await sb.from('applications').update(payload).eq('id', editId);
+    } else {
+      dbRes = await sb.from('applications').insert([payload]);
+    }
+
+    if (dbRes.error) {
+      alert("Error saving application: " + dbRes.error.message);
+      btn.disabled = false;
+      btn.textContent = "Submit Final Application";
+      return;
+    }
+
+    // 3 & 11. Send Provisional / Confirmation Alert via EmailJS
+    try {
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_email: email,
+        subject: `Admit360 Application Received - Status: ${admissionStatus}`,
+        message: `Tracking PIN: ${editToken} (Valid for 48-hour self-edit). Status: ${admissionStatus}. ${
+          missingDocs.length ? "VTU Missing Documents: " + missingDocs.join(", ") + " due by " + payload.undertaking_deadline : "All mandatory documents uploaded."
+        }`
+      });
+    } catch (_) {}
+
+    closeModal('reviewModal');
+    alert(`Application Submitted!\n\nYour 48-Hour Self-Edit Tracking PIN is: ${editToken}\nStatus: ${admissionStatus}`);
+    switchView('track');
+    document.getElementById('trackEmail').value = email;
+    document.getElementById('trackToken').value = editToken;
+    lookupApplication();
+  }
+
+  // =========================================================================
+  // 8 & 13. STUDENT 48-HR SELF-EDIT & FACULTY CORRECTION WORKFLOW
+  // =========================================================================
+  async function lookupApplication() {
+    const email = document.getElementById('trackEmail').value.trim();
+    const token = document.getElementById('trackToken').value.trim().toUpperCase();
+    const box = document.getElementById('trackResult');
+
+    const { data, error } = await sb.from('applications').select('*').eq('email', email).eq('edit_token', token).single();
+    if (error || !data) {
+      box.innerHTML = `<div class="alert alert-danger">No matching record found for that Email and Tracking PIN.</div>`;
+      return;
+    }
+
+    const hoursSinceCreate = (Date.now() - new Date(data.created_at).getTime()) / (1000 * 60 * 60);
+    const canSelfEdit = hoursSinceCreate <= 48 && data.status !== 'Approved';
+    const isCorrectionRequested = data.status === 'Correction Requested';
+
+    box.innerHTML = `
+      <div class="card" style="background:#f8fafc;">
+        <h4>Application Summary: ${data.student_name}</h4>
+        <p><strong>Status:</strong> <span class="badge badge-pend">${data.status}</span></p>
+        <p><strong>Father:</strong> Mr. ${data.father_name} | <strong>Mother:</strong> Mrs./Ms. ${data.mother_name}</p>
+        ${data.missing_documents?.length ? `<div class="alert alert-warning"><strong>VTU Missing Documents:</strong> ${data.missing_documents.join(', ')} (Deadline: ${data.undertaking_deadline || 'Immediate'})</div>` : ''}
+        ${isCorrectionRequested ? `<div class="alert alert-danger"><strong>Faculty Correction Request:</strong> ${data.correction_note}<br/>Flagged Fields: ${(data.flagged_fields || []).join(', ')}</div>` : ''}
+        ${(canSelfEdit || isCorrectionRequested) ? `<button class="btn btn-warning" onclick='loadForCorrection(${JSON.stringify(data)})'>Open Form to Edit / Fix Flagged Fields</button>` : `<p style="color:var(--muted);">Record is locked for verification.</p>`}
+      </div>
+    `;
+  }
+
+  function loadForCorrection(record) {
+    switchView('apply');
+    document.getElementById('otpGateCard').classList.add('hidden');
+    document.getElementById('admissionForm').classList.remove('hidden');
+
+    document.getElementById('editModeRecordId').value = record.id;
+    document.getElementById('otpEmail').value = record.email;
+    document.getElementById('otpPhone').value = record.phone;
+    document.getElementById('studentName').value = record.student_name;
+    document.getElementById('fatherName').value = record.father_name;
+    document.getElementById('motherName').value = record.mother_name;
+    document.getElementById('studentDob').value = record.dob;
+    document.getElementById('qualifyingBoard').value = record.qualifying_board;
+
+    // 8. Field-Level Locking when Faculty Requests Correction
+    if (record.status === 'Correction Requested' && Array.isArray(record.flagged_fields)) {
+      const allFields = ['studentName', 'fatherName', 'motherName', 'studentDob', 'qualifyingBoard', 'file12th', 'fileTC', 'fileMigration'];
+      allFields.forEach(fid => {
+        const el = document.getElementById(fid);
+        if (el && !record.flagged_fields.includes(fid)) {
+          el.readOnly = true;
+          el.disabled = true;
+        }
+      });
+    }
+  }
+
+  // =========================================================================
+  // 2, 8, 12. FACULTY ADMIN SPLIT-SCREEN REVIEW & VTU CSV EXPORT
+  // =========================================================================
+  async function loadAdminApplications() {
+    const tbody = document.getElementById('adminTableBody');
+    const { data, error } = await sb.from('applications').select('*').order('created_at', { ascending: false });
+    if (error) {
+      tbody.innerHTML = `<tr><td colspan="6">Error loading records: ${error.message}</td></tr>`;
+      return;
+    }
+    cachedApplications = data;
+    tbody.innerHTML = data.map(row => `
+      <tr>
+        <td><strong>${row.student_name}</strong><br/><small>${row.email}</small></td>
+        <td>${row.qualifying_board}</td>
+        <td><span class="badge ${row.status === 'Approved' ? 'badge-ok' : 'badge-pend'}">${row.status}</span></td>
+        <td>
+          10th: ${row.status_10th_marks_card}<br/>
+          TC: ${row.status_transfer_certificate}<br/>
+          Mig: ${row.status_migration_certificate}
+        </td>
+        <td>${row.updated_by_admin ? 'Edited by Faculty' : 'Original'}</td>
+        <td><button class="btn" onclick="openAdminSplitModal('${row.id}')">Inspect &amp; Verify</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function openAdminSplitModal(id) {
+    const rec = cachedApplications.find(r => String(r.id) === String(id));
+    if (!rec) return;
+    activeAdminRecord = rec;
+
+    document.getElementById('admRecordId').value = rec.id;
+    document.getElementById('admStudentName').value = rec.student_name;
+    document.getElementById('admFatherName').value = rec.father_name;
+    document.getElementById('admMotherName').value = rec.mother_name;
+    document.getElementById('admDob').value = rec.dob;
+    document.getElementById('admBoard').value = rec.qualifying_board;
+    document.getElementById('admStatus10th').value = rec.status_10th_marks_card || 'Missing';
+    document.getElementById('admStatusTC').value = rec.status_transfer_certificate || 'Missing';
+    document.getElementById('admStatusMig').value = rec.status_migration_certificate || 'Not Required';
+    document.getElementById('admOverallStatus').value = rec.status || 'Pending';
+    document.getElementById('admCorrectionNote').value = rec.correction_note || '';
+
+    document.querySelectorAll('.flag-chk').forEach(chk => {
+      chk.checked = (rec.flagged_fields || []).includes(chk.value);
     });
 
-    // 5. FETCH & RENDER APPLICATIONS
-    async function renderAdminTable() {
-        const tbody = document.getElementById('adminTableBody');
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading applications...</td></tr>';
+    const auditList = document.getElementById('admAuditList');
+    auditList.innerHTML = (rec.audit_log || []).map(entry =>
+      `<li><strong>${entry.timestamp.split('T')[0]}:</strong> ${entry.action}</li>`
+    ).join('');
 
-        const { data: applications, error } = await supabaseClient
-            .from('applications')
-            .select('*')
-            .order('created_at', { ascending: false });
+    switchDocPreview('10th');
+    document.getElementById('adminSplitModal').classList.add('open');
+  }
 
-        if (error) {
-            tbody.innerHTML = `<tr><td colspan="7" style="color:red; text-align:center;">Error: ${error.message}</td></tr>`;
-            return;
-        }
+  function switchDocPreview(docKey) {
+    const viewer = document.getElementById('docPreviewContainer');
+    const url = activeAdminRecord?.doc_urls?.[docKey];
+    if (!url) {
+      viewer.innerHTML = `<div style="color:#fff; padding:2rem; text-align:center;">No file uploaded for ${docKey.toUpperCase()}.</div>`;
+      return;
+    }
+    if (url.toLowerCase().endsWith('.pdf')) {
+      viewer.innerHTML = `<iframe src="${url}"></iframe>`;
+    } else {
+      viewer.innerHTML = `<img src="${url}" alt="${docKey} document" />`;
+    }
+  }
 
-        if (applications.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No applications found.</td></tr>';
-            return;
-        }
+  async function saveAdminReview(actionType) {
+    const rec = activeAdminRecord;
+    const newStu = document.getElementById('admStudentName').value.trim();
+    const newFth = document.getElementById('admFatherName').value.trim();
+    const newMth = document.getElementById('admMotherName').value.trim();
 
-        tbody.innerHTML = '';
-        applications.forEach(app => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${app.student_name}</td>
-                <td>${app.email}</td>
-                <td>${app.course_name}</td>
-                <td><a href="${app.document_url}" target="_blank" class="doc-link">View Document</a></td>
-                <td class="status-${app.status}">${app.status}</td>
-                <td><strong>${app.admission_id ? app.admission_id : 'N/A'}</strong></td>
-                <td>
-                    ${app.status === 'Pending' ? `
-                        <button class="action-btn approve-btn" onclick="processApplication('${app.id}', 'Approved')">Approve</button>
-                        <button class="action-btn reject-btn" onclick="processApplication('${app.id}', 'Rejected')">Reject</button>
-                    ` : 'Processed'}
-                </td>
-            `;
-            tbody.appendChild(tr);
+    // 12. Change History / Audit Log
+    const auditEntries = Array.isArray(rec.audit_log) ? [...rec.audit_log] : [];
+    const today = new Date().toISOString().split('T')[0];
+    let wasEdited = rec.updated_by_admin || false;
+
+    if (newStu !== rec.student_name) {
+      auditEntries.push({ timestamp: new Date().toISOString(), action: `${today}: Student name corrected from '${rec.student_name}' to '${newStu}' per 10th Marks Card` });
+      wasEdited = true;
+    }
+    if (newFth !== rec.father_name) {
+      auditEntries.push({ timestamp: new Date().toISOString(), action: `${today}: Father's name corrected from '${rec.father_name}' to '${newFth}' per 10th Marks Card` });
+      wasEdited = true;
+    }
+    if (newMth !== rec.mother_name) {
+      auditEntries.push({ timestamp: new Date().toISOString(), action: `${today}: Mother's name corrected from '${rec.mother_name}' to '${newMth}' per 10th Marks Card` });
+      wasEdited = true;
+    }
+
+    const flagged = Array.from(document.querySelectorAll('.flag-chk:checked')).map(c => c.value);
+    const note = document.getElementById('admCorrectionNote').value.trim();
+    const finalStatus = actionType === 'SaveEdits' ? document.getElementById('admOverallStatus').value : actionType;
+
+    auditEntries.push({ timestamp: new Date().toISOString(), action: `${today}: Admin updated status to '${finalStatus}'` });
+
+    const { error } = await sb.from('applications').update({
+      student_name: newStu,
+      father_name: newFth,
+      mother_name: newMth,
+      dob: document.getElementById('admDob').value,
+      qualifying_board: document.getElementById('admBoard').value,
+      status_10th_marks_card: document.getElementById('admStatus10th').value,
+      status_transfer_certificate: document.getElementById('admStatusTC').value,
+      status_migration_certificate: document.getElementById('admStatusMig').value,
+      status: finalStatus,
+      flagged_fields: flagged,
+      correction_note: note,
+      updated_by_admin: wasEdited,
+      audit_log: auditEntries
+    }).eq('id', rec.id);
+
+    if (error) {
+      alert("Failed to save admin changes: " + error.message);
+      return;
+    }
+
+    // 8. Automated Student Link via EmailJS for Corrections
+    if (finalStatus === 'Correction Requested') {
+      const correctionLink = `${window.location.origin}${window.location.pathname}?email=${encodeURIComponent(rec.email)}&token=${rec.edit_token}`;
+      try {
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+          to_email: rec.email,
+          subject: "Action Required: Admit360 Application Correction Requested",
+          message: `Faculty flagged fields (${flagged.join(', ')}) for correction. Note: ${note}. Open your locked correction portal here: ${correctionLink}`
         });
+      } catch (_) {}
     }
 
-    // 6. PROCESS APPLICATION & TRIGGER EMAIL
-    async function processApplication(id, newStatus) {
-        try {
-            // Fetch student details
-            const { data: app, error: fetchError } = await supabaseClient
-                .from('applications')
-                .select('*')
-                .eq('id', id)
-                .single();
+    closeModal('adminSplitModal');
+    loadAdminApplications();
+  }
 
-            if (fetchError) throw fetchError;
-
-            // Update status in Supabase
-            const { error: updateError } = await supabaseClient
-                .from('applications')
-                .update({ status: newStatus })
-                .eq('id', id);
-
-            if (updateError) throw updateError;
-
-            // Fetch newly generated Admission ID
-            const { data: updatedApp } = await supabaseClient
-                .from('applications')
-                .select('admission_id')
-                .eq('id', id)
-                .single();
-
-            // Send notification via EmailJS if Approved
-            if (newStatus === 'Approved' && updatedApp?.admission_id) {
-                await sendApprovalEmail(app.email, app.student_name, updatedApp.admission_id);
-            } else {
-                console.log(`Application marked as ${newStatus}`);
-            }
-
-            renderAdminTable();
-        } catch (error) {
-            alert('Error updating application: ' + error.message);
-        }
+  // 12. "Generate VTU Master Sheet" (CSV Export)
+  function exportVtuMasterCsv() {
+    const approved = cachedApplications.filter(r => r.status === 'Approved');
+    if (!approved.length) {
+      alert("No 'Approved' records available to export.");
+      return;
     }
 
-    // 7. EMAILJS NOTIFICATION FUNCTION
-    async function sendApprovalEmail(email, name, admissionId) {
-        try {
-            await emailjs.send("service_quk0cok", "template_hdbttxx", {
-                to_email: email,
-                to_name: name,
-                admission_id: admissionId
-            });
-            console.log(`Application Approved & notification email sent to ${email}!`);
-        } catch (error) {
-            console.error('Email failed:', error);
-            alert('Application approved, but failed to send email notification.');
-        }
-    }
+    const headers = ["SL_NO", "STUDENT_NAME_AS_PER_10TH", "FATHER_NAME", "MOTHER_NAME", "DOB_YYYY_MM_DD", "QUALIFYING_BOARD", "EMAIL", "PHONE", "10TH_STATUS", "TC_STATUS", "MIGRATION_STATUS"];
+    const rows = approved.map((r, idx) => [
+      idx + 1,
+      `"${(r.student_name || '').toUpperCase()}"`,
+      `"${(r.father_name || '').toUpperCase()}"`,
+      `"${(r.mother_name || '').toUpperCase()}"`,
+      r.dob || '',
+      `"${(r.qualifying_board || '').toUpperCase()}"`,
+      r.email || '',
+      r.phone || '',
+      r.status_10th_marks_card,
+      r.status_transfer_certificate,
+      r.status_migration_certificate
+    ].join(','));
 
-    // 8. CHECK APPLICATION STATUS
-    async function checkStudentStatus() {
-        const email = document.getElementById('trackEmail').value.trim();
-        const resultDiv = document.getElementById('trackingResult');
-
-        if (!email) {
-            alert('Please enter your email address.');
-            return;
-        }
-
-        resultDiv.style.display = 'block';
-        resultDiv.innerHTML = '<p>Searching...</p>';
-
-        const { data: applications, error } = await supabaseClient
-            .from('applications')
-            .select('student_name, course_name, status, admission_id')
-            .eq('email', email)
-            .order('created_at', { ascending: false });
-
-        if (error || !applications || applications.length === 0) {
-            resultDiv.innerHTML = `<p style="color: #dc2626;">No application found for <strong>${email}</strong>.</p>`;
-            return;
-        }
-
-        const app = applications[0];
-        let statusColor = app.status === 'Approved' ? '#16a34a' : (app.status === 'Rejected' ? '#dc2626' : '#d97706');
-
-        resultDiv.innerHTML = `
-            <h4 style="margin-bottom: 8px;">Application Status for ${app.student_name}</h4>
-            <p><strong>Course:</strong> ${app.course_name}</p>
-            <p><strong>Status:</strong> <span style="color: ${statusColor}; font-weight: bold;">${app.status}</span></p>
-            ${app.status === 'Approved' ? `
-                <p style="margin-top: 8px; padding: 8px; background: #dcfce7; border: 1px solid #86efac; border-radius: 4px;">
-                    🎉 <strong>Admission ID:</strong> <span style="font-size: 1.1em; font-weight: bold; color: #15803d;">${app.admission_id}</span>
-                </p>
-            ` : ''}
-        `;
-    }
-
-    // Initialize Default View
-    switchView('student');
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", `VTU_Master_Verified_Admissions_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 </script>
-
 </body>
 </html>
